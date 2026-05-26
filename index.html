@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects — Nuno Caiadas</title>
+  <meta name="description" content="Personal projects by Nuno Caiadas — expense tracker, workout logbook, and MTG cube tracker.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    /* ── Design tokens ── */
+    :root {
+      --bg: #041c1c;
+      --bg-alt: #0a2626;
+      --midground: #ffe6cb;
+      --foreground: #ffffff;
+      --text-secondary: rgba(255, 230, 203, 0.5);
+      --text-tertiary: rgba(255, 230, 203, 0.25);
+      --border: rgba(255, 230, 203, 0.12);
+      --border-hover: rgba(255, 230, 203, 0.35);
+      --accent: #ffbd38;
+      --card-bg: rgba(255, 230, 203, 0.03);
+      --card-bg-hover: rgba(255, 230, 203, 0.06);
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --gutter: 2rem;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--midground);
+      font-family: var(--font-display);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: soft-light;
+    }
+
+    /* ── Radial gradient glow ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 0% 0%, rgba(255, 189, 56, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Scan line overlay ── */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(255, 255, 255, 0.015) 1px,
+        rgba(255, 255, 255, 0.015) 2px
+      );
+    }
+
+    /* ── Layout ── */
+    .wrapper {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+      width: 100%;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 3rem 0 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .header-title h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--midground);
+      mix-blend-mode: plus-lighter;
+    }
+
+    .header-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .header-meta small {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .header-link {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .header-link:hover {
+      color: var(--midground);
+    }
+
+    /* ── Main content ── */
+    main {
+      flex: 1;
+      padding: 3rem 0;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── Project cards grid ── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+      .projects-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .projects-grid {
+        grid-template-columns: 1fr;
+      }
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+    }
+
+    /* ── Project card ── */
+    .project-card {
+      position: relative;
+      background: var(--card-bg);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.3s ease;
+      overflow: hidden;
+    }
+
+    .project-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      transition: background 0.3s ease;
+      pointer-events: none;
+    }
+
+    .project-card:hover::before {
+      background: var(--card-bg-hover);
+    }
+
+    .project-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .project-card:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: -1px;
+    }
+
+    /* ── Card content ── */
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+      line-height: 1;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    .project-card:hover .card-icon {
+      opacity: 1;
+    }
+
+    .card-arrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      transition: color 0.3s ease, transform 0.3s ease;
+      flex-shrink: 0;
+      margin-top: 0.25rem;
+    }
+
+    .project-card:hover .card-arrow {
+      color: var(--midground);
+      transform: translate(2px, -2px);
+    }
+
+    .card-title {
+      font-size: 1.375rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: var(--midground);
+    }
+
+    .card-tech {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+    }
+
+    .card-tech span {
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      transition: border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .project-card:hover .card-tech span {
+      border-color: var(--border-hover);
+      color: var(--midground);
+    }
+
+    .card-description {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Status dot ── */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-family: var(--font-mono);
+      font-size: 0.625rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: auto;
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    footer small {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      font-family: var(--font-mono);
+      font-size: 0.6875rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--midground);
+    }
+
+    /* ── Blinking cursor ── */
+    .blink {
+      display: inline-block;
+      width: 0.6em;
+      height: 1em;
+      background: var(--midground);
+      animation: blink-anim 1s step-end infinite;
+      vertical-align: text-bottom;
+      margin-left: 0.15em;
+    }
+
+    @keyframes blink-anim {
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <div class="wrapper">
+    <header>
+      <div class="header-title">
+        <small class="header-label">Projects<span class="blink"></span></small>
+        <h1>Personal Projects</h1>
+      </div>
+      <div class="header-meta">
+        <small>Nuno Caiadas</small>
+        <a href="https://github.com/caiadas25" target="_blank" rel="noopener noreferrer" class="header-link">GitHub ↗</a>
+      </div>
+    </header>
+
+    <main>
+      <p class="section-label">/ Applications</p>
+
+      <div class="projects-grid">
+        <!-- Expense Tracker -->
+        <a href="https://expense-tracker-liart-gamma.vercel.app" target="_blank" rel="noopener noreferrer" class="project-card">
+          <div class="card-header">
+            <span class="card-icon">⟐</span>
+            <span class="card-arrow">↗</span>
+          </div>
+          <div>
+            <h2 class="card-title">Expense Tracker</h2>
+          </div>
+          <p class="card-description">
+            Personal finance dashboard with portfolio tracking, expense categorization, broker consolidation, and interactive analytics.
+          </p>
+          <div class="card-tech">
+            <span>Vue</span>
+            <span>Supabase</span>
+          </div>
+          <div class="status">
+            <span class="status-dot"></span>
+            <span>Live</span>
+          </div>
+        </a>
+
+        <!-- Workout Logbook -->
+        <a href="https://workout-logbook.vercel.app" target="_blank" rel="noopener noreferrer" class="project-card">
+          <div class="card-header">
+            <span class="card-icon">⟡</span>
+            <span class="card-arrow">↗</span>
+          </div>
+          <div>
+            <h2 class="card-title">Workout Logbook</h2>
+          </div>
+          <p class="card-description">
+            Weekly training planner with exercise library, set logging, session history, progression charts, and consistency heatmaps.
+          </p>
+          <div class="card-tech">
+            <span>Next.js</span>
+            <span>Supabase</span>
+          </div>
+          <div class="status">
+            <span class="status-dot"></span>
+            <span>Live</span>
+          </div>
+        </a>
+
+        <!-- MTG Cube Tracker -->
+        <a href="https://mtg-cube-tracker.vercel.app" target="_blank" rel="noopener noreferrer" class="project-card">
+          <div class="card-header">
+            <span class="card-icon">◇</span>
+            <span class="card-arrow">↗</span>
+          </div>
+          <div>
+            <h2 class="card-title">MTG Cube Tracker</h2>
+          </div>
+          <p class="card-description">
+            Draft session logger with Swiss tournaments, deck tracking, color breakdowns, archetype analysis, and card performance stats.
+          </p>
+          <div class="card-tech">
+            <span>Next.js</span>
+            <span>Supabase</span>
+          </div>
+          <div class="status">
+            <span class="status-dot"></span>
+            <span>Live</span>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <footer>
+      <small>MIT License &middot; 2026</small>
+      <div class="footer-links">
+        <a href="https://github.com/caiadas25" target="_blank" rel="noopener noreferrer">caiadas25</a>
+        <a href="https://vercel.com/nuno-caiadas-projects" target="_blank" rel="noopener noreferrer">Vercel ↗</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
