@@ -4,7 +4,7 @@ A minimalist landing page aggregating links to personal projects hosted on Verce
 
 Design inspired by [Hermes Agent](https://hermes-agent.nousresearch.com) — dark theme, industrial minimalism, warm midground tones.
 
-**Live at:** [personal-projects.vercel.app](https://personal-projects.vercel.app) _(soon)_
+**Live at:** [personal-projects-one-blond.vercel.app](https://personal-projects-one-blond.vercel.app)
 
 ## Projects
 
